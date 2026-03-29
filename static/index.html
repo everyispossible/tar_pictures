@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片压缩工具</title>
+    <link rel="stylesheet" href="https://unpkg.com/mdui@2/mdui.css">
+    <script src="https://unpkg.com/mdui@2/mdui.global.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body {
+            background-color: rgb(var(--mdui-color-surface-container-low));
+            min-height: 100vh;
+            font-family: 'Roboto', 'Noto Sans SC', sans-serif;
+        }
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+        .upload-area {
+            border: 2px dashed rgb(var(--mdui-color-outline));
+            border-radius: var(--mdui-shape-corner-large);
+            padding: 64px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: rgb(var(--mdui-color-surface));
+            box-shadow: 0 1px 3px rgb(var(--mdui-color-shadow) / 0.12), 0 1px 2px rgb(var(--mdui-color-shadow) / 0.24);
+        }
+        .upload-area:hover {
+            border-color: rgb(var(--mdui-color-primary));
+            background-color: rgb(var(--mdui-color-primary-container) / 0.1);
+            box-shadow: 0 2px 6px rgb(var(--mdui-color-shadow) / 0.15), 0 1px 3px rgb(var(--mdui-color-shadow) / 0.2);
+        }
+        .upload-area.dragover {
+            border-color: rgb(var(--mdui-color-primary));
+            background-color: rgb(var(--mdui-color-primary-container) / 0.2);
+            box-shadow: 0 4px 12px rgb(var(--mdui-color-shadow) / 0.2);
+        }
+        .upload-icon {
+            font-size: 80px;
+            color: rgb(var(--mdui-color-primary));
+            margin-bottom: 24px;
+            transition: transform 0.3s ease;
+        }
+        .upload-area:hover .upload-icon {
+            transform: scale(1.05);
+        }
+        .upload-area h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: rgb(var(--mdui-color-on-surface));
+            margin: 0 0 12px 0;
+        }
+        .upload-area p {
+            font-size: 16px;
+            color: rgb(var(--mdui-color-on-surface-variant));
+            margin: 0 0 8px 0;
+        }
+        .upload-area p:last-child {
+            font-size: 14px;
+            color: rgb(var(--mdui-color-outline));
+            margin-top: 8px;
+        }
+        .settings-card {
+            margin-top: 32px;
+            background-color: rgb(var(--mdui-color-surface));
+            border-radius: var(--mdui-shape-corner-large);
+            box-shadow: 0 2px 8px rgb(var(--mdui-color-shadow) / 0.15);
+            padding: 28px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .settings-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgb(var(--mdui-color-shadow) / 0.2);
+        }
+        .settings-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: rgb(var(--mdui-color-on-surface));
+            margin: 0 0 20px 0;
+        }
+        .preview-card {
+            margin-top: 32px;
+            background-color: rgb(var(--mdui-color-surface));
+            border-radius: var(--mdui-shape-corner-large);
+            box-shadow: 0 2px 8px rgb(var(--mdui-color-shadow) / 0.15);
+            padding: 28px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .preview-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgb(var(--mdui-color-shadow) / 0.2);
+        }
+        .preview-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: rgb(var(--mdui-color-on-surface));
+            margin: 0 0 20px 0;
+        }
+        .image-preview {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: var(--mdui-shape-corner-medium);
+            box-shadow: 0 2px 8px rgb(var(--mdui-color-shadow) / 0.15);
+            transition: transform 0.3s ease;
+        }
+        .image-preview:hover {
+            transform: scale(1.02);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background-color: rgb(var(--mdui-color-surface-container));
+            border-radius: var(--mdui-shape-corner-medium);
+            box-shadow: 0 1px 2px rgb(var(--mdui-color-shadow) / 0.1);
+            transition: all 0.3s ease;
+        }
+        .stat-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgb(var(--mdui-color-shadow) / 0.15);
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: rgb(var(--mdui-color-primary));
+            line-height: 1.2;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: rgb(var(--mdui-color-on-surface-variant));
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        .compression-section {
+            margin-top: 24px;
+        }
+        .compression-bar {
+            width: 100%;
+            height: 10px;
+            background-color: rgb(var(--mdui-color-surface-container));
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 12px;
+            box-shadow: inset 0 1px 3px rgb(var(--mdui-color-shadow) / 0.2);
+        }
+        .compression-progress {
+            height: 100%;
+            background: linear-gradient(90deg, rgb(var(--mdui-color-primary)), rgb(var(--mdui-color-tertiary)));
+            border-radius: 5px;
+            transition: width 0.8s ease;
+            box-shadow: 0 0 8px rgb(var(--mdui-color-primary) / 0.3);
+        }
+        .action-buttons {
+            display: flex;
+            gap: 16px;
+            margin-top: 32px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .action-buttons mdui-button {
+            flex: 1;
+            min-width: 150px;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .file-input {
+            display: none;
+        }
+        .compression-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: rgb(var(--mdui-color-on-surface-variant));
+            font-weight: 500;
+        }
+
+        /* 响应式设计 - 平板适配 */
+        @media (max-width: 768px) {
+            .container {
+                max-width: 95%;
+                padding: 24px 16px;
+            }
+            .upload-area {
+                padding: 56px 20px;
+            }
+            .upload-icon {
+                font-size: 72px;
+                margin-bottom: 20px;
+            }
+            .upload-area h2 {
+                font-size: 22px;
+            }
+            .upload-area p {
+                font-size: 15px;
+            }
+            .settings-card {
+                margin-top: 28px;
+                padding: 24px;
+            }
+            .preview-card {
+                margin-top: 28px;
+                padding: 24px;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 14px;
+            }
+            .stat-item {
+                padding: 18px;
+            }
+            .stat-value {
+                font-size: 26px;
+            }
+            .stat-label {
+                font-size: 13px;
+            }
+            .image-preview {
+                max-height: 350px;
+            }
+            .action-buttons {
+                flex-direction: column;
+                gap: 14px;
+            }
+            .action-buttons mdui-button {
+                width: 100%;
+                min-width: unset;
+            }
+        }
+
+        /* 手机端适配 */
+        @media (max-width: 480px) {
+            .container {
+                max-width: 98%;
+                padding: 20px 12px;
+            }
+            .upload-area {
+                padding: 48px 16px;
+            }
+            .upload-icon {
+                font-size: 64px;
+                margin-bottom: 18px;
+            }
+            .upload-area h2 {
+                font-size: 20px;
+            }
+            .upload-area p {
+                font-size: 14px;
+            }
+            .settings-card {
+                margin-top: 24px;
+                padding: 20px;
+            }
+            .preview-card {
+                margin-top: 24px;
+                padding: 20px;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .stat-item {
+                padding: 14px;
+            }
+            .stat-value {
+                font-size: 22px;
+            }
+            .stat-label {
+                font-size: 12px;
+            }
+            .image-preview {
+                max-height: 300px;
+            }
+        }
+
+        /* 小屏幕手机适配 */
+        @media (max-width: 360px) {
+            .container {
+                padding: 16px 10px;
+            }
+            .upload-area {
+                padding: 36px 12px;
+            }
+            .upload-icon {
+                font-size: 48px;
+                margin-bottom: 16px;
+            }
+            .upload-area h2 {
+                font-size: 18px;
+            }
+            .settings-card {
+                padding: 16px;
+            }
+            .preview-card {
+                padding: 16px;
+            }
+            .stats-grid {
+                gap: 8px;
+            }
+            .stat-item {
+                padding: 12px;
+            }
+            .stat-value {
+                font-size: 20px;
+            }
+            .stat-label {
+                font-size: 11px;
+            }
+            .image-preview {
+                max-height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <mdui-top-app-bar>
+        <mdui-button-icon icon="menu"></mdui-button-icon>
+        <mdui-top-app-bar-title>图片压缩工具</mdui-top-app-bar-title>
+        <mdui-button-icon icon="more_vert"></mdui-button-icon>
+    </mdui-top-app-bar>
+
+    <div class="container">
+        <mdui-card class="upload-area" id="uploadArea">
+            <div class="upload-icon">
+                <mdui-icon name="cloud_upload"></mdui-icon>
+            </div>
+            <h2 style="margin: 0 0 8px 0; color: rgb(var(--mdui-color-on-surface));">拖拽图片到这里</h2>
+            <p style="margin: 0; color: rgb(var(--mdui-color-on-surface-variant));">或点击选择图片文件</p>
+            <p style="margin: 8px 0 0 0; font-size: 12px; color: rgb(var(--mdui-color-outline));">支持 JPG、PNG、WebP 格式</p>
+            <input type="file" id="fileInput" class="file-input" accept="image/*">
+        </mdui-card>
+
+        <mdui-card class="settings-card" id="settingsCard" style="display: none; padding: 24px;">
+            <h3 style="margin: 0 0 16px 0;">压缩设置</h3>
+            
+            <mdui-select id="formatSelect" label="输出格式" value="original" style="width: 100%; margin-bottom: 16px;">
+                <mdui-menu-item value="original">保持原格式</mdui-menu-item>
+                <mdui-menu-item value="jpeg">JPEG</mdui-menu-item>
+                <mdui-menu-item value="png">PNG</mdui-menu-item>
+                <mdui-menu-item value="webp">WebP</mdui-menu-item>
+            </mdui-select>
+
+            <div style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label>压缩质量</label>
+                    <span id="qualityValue" style="color: rgb(var(--mdui-color-primary)); font-weight: 600;">80%</span>
+                </div>
+                <mdui-slider id="qualitySlider" min="1" max="100" value="80" style="width: 100%;"></mdui-slider>
+            </div>
+
+            <mdui-button id="previewBtn" variant="outlined" style="width: 100%;">
+                <mdui-icon slot="icon" name="preview"></mdui-icon>
+                预览压缩效果
+            </mdui-button>
+        </mdui-card>
+
+        <mdui-card class="preview-card" id="previewCard" style="display: none; padding: 24px;">
+            <h3 style="margin: 0 0 16px 0;">压缩结果</h3>
+            
+            <div style="text-align: center; margin-bottom: 16px;">
+                <img id="previewImage" class="image-preview" src="" alt="压缩预览">
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="originalSize">-</div>
+                    <div class="stat-label">原始大小</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="compressedSize">-</div>
+                    <div class="stat-label">压缩后大小</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="compressionRatio">-</div>
+                    <div class="stat-label">压缩比例</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="imageDimensions">-</div>
+                    <div class="stat-label">图片尺寸</div>
+                </div>
+            </div>
+
+            <div class="compression-section">
+                <div class="compression-info">
+                    <span>压缩进度</span>
+                    <span id="compressionText">0%</span>
+                </div>
+                <div class="compression-bar">
+                    <div class="compression-progress" id="compressionProgress" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <mdui-button id="downloadBtn" variant="filled" style="flex: 1;">
+                    <mdui-icon slot="icon" name="download"></mdui-icon>
+                    下载压缩后的图片
+                </mdui-button>
+                <mdui-button id="resetBtn" variant="outlined">
+                    <mdui-icon slot="icon" name="refresh"></mdui-icon>
+                    重新选择
+                </mdui-button>
+            </div>
+        </mdui-card>
+
+        <mdui-snackbar id="snackbar" placement="top"></mdui-snackbar>
+        <mdui-linear-progress id="progressBar" style="position: fixed; top: 0; left: 0; right: 0; display: none;"></mdui-linear-progress>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const settingsCard = document.getElementById('settingsCard');
+        const previewCard = document.getElementById('previewCard');
+        const qualitySlider = document.getElementById('qualitySlider');
+        const qualityValue = document.getElementById('qualityValue');
+        const formatSelect = document.getElementById('formatSelect');
+        const previewBtn = document.getElementById('previewBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const previewImage = document.getElementById('previewImage');
+        const snackbar = document.getElementById('snackbar');
+        const progressBar = document.getElementById('progressBar');
+        const body = document.body;
+
+        let currentFile = null;
+        let compressedData = null;
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // 整个页面的拖拽事件
+        body.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        body.addEventListener('dragleave', (e) => {
+            // 只有当鼠标离开整个页面时才移除dragover状态
+            if (e.target === body) {
+                uploadArea.classList.remove('dragover');
+            }
+        });
+
+        body.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        // 保持卡片区域的拖拽事件
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        qualitySlider.addEventListener('input', (e) => {
+            qualityValue.textContent = e.target.value + '%';
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showSnackbar('请选择图片文件', 'error');
+                return;
+            }
+
+            currentFile = file;
+            uploadArea.style.display = 'none';
+            settingsCard.style.display = 'block';
+            showSnackbar('图片已选择，请调整压缩设置');
+        }
+
+        previewBtn.addEventListener('click', async () => {
+            if (!currentFile) return;
+
+            progressBar.style.display = 'block';
+            previewBtn.loading = true;
+
+            const formData = new FormData();
+            formData.append('image', currentFile);
+            formData.append('quality', qualitySlider.value);
+            formData.append('format', formatSelect.value);
+
+            try {
+                const response = await fetch('/api/compress/info', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    compressedData = data;
+                    previewImage.src = data.preview;
+                    
+                    document.getElementById('originalSize').textContent = formatFileSize(data.original_size);
+                    document.getElementById('compressedSize').textContent = formatFileSize(data.compressed_size);
+                    document.getElementById('compressionRatio').textContent = data.compression_ratio + '%';
+                    document.getElementById('imageDimensions').textContent = `${data.original_width} x ${data.original_height}`;
+                    
+                    const progress = Math.max(0, Math.min(100, data.compression_ratio));
+                    document.getElementById('compressionProgress').style.width = progress + '%';
+                    document.getElementById('compressionText').textContent = progress + '%';
+
+                    previewCard.style.display = 'block';
+                    previewCard.scrollIntoView({ behavior: 'smooth' });
+                    
+                    showSnackbar('压缩预览成功');
+                } else {
+                    showSnackbar(data.error || '压缩失败', 'error');
+                }
+            } catch (error) {
+                showSnackbar('网络错误，请重试', 'error');
+                console.error(error);
+            } finally {
+                progressBar.style.display = 'none';
+                previewBtn.loading = false;
+            }
+        });
+
+        downloadBtn.addEventListener('click', async () => {
+            if (!currentFile) return;
+
+            progressBar.style.display = 'block';
+            downloadBtn.loading = true;
+
+            const formData = new FormData();
+            formData.append('image', currentFile);
+            formData.append('quality', qualitySlider.value);
+            formData.append('format', formatSelect.value);
+
+            try {
+                const response = await fetch('/api/compress', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'compressed_' + currentFile.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    showSnackbar('下载成功');
+                } else {
+                    showSnackbar('下载失败', 'error');
+                }
+            } catch (error) {
+                showSnackbar('网络错误，请重试', 'error');
+                console.error(error);
+            } finally {
+                progressBar.style.display = 'none';
+                downloadBtn.loading = false;
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            currentFile = null;
+            compressedData = null;
+            fileInput.value = '';
+            uploadArea.style.display = 'block';
+            settingsCard.style.display = 'none';
+            previewCard.style.display = 'none';
+            previewImage.src = '';
+            qualitySlider.value = 80;
+            qualityValue.textContent = '80%';
+            formatSelect.value = 'original';
+            uploadArea.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showSnackbar(message, type = 'normal') {
+            snackbar.innerHTML = message;
+            if (type === 'error') {
+                snackbar.style.setProperty('--mdui-color-inverse-surface', 'var(--mdui-color-error-container)');
+                snackbar.style.setProperty('--mdui-color-inverse-on-surface', 'var(--mdui-color-on-error-container)');
+            } else {
+                snackbar.style.removeProperty('--mdui-color-inverse-surface');
+                snackbar.style.removeProperty('--mdui-color-inverse-on-surface');
+            }
+            snackbar.open = true;
+        }
+    </script>
+</body>
+</html>
